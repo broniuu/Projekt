@@ -52,78 +52,6 @@ namespace consoleasync
             return Status.avalible;
         }
 
-        public static Dish FindDishPropertiesFromImperialrestauracja(HtmlDocument doc, string nameXPath, string priceXPath, string availabiltyXPath)
-        {
-            HtmlNode nameNode = doc.DocumentNode.SelectSingleNode($"{nameXPath}");
-            if (nameNode == null)
-            {
-                return null;
-            }
-            var name = nameNode.InnerText.Trim();
-            //Console.WriteLine(name);
-            var price = doc.DocumentNode.SelectSingleNode($"{priceXPath}").InnerText.Trim().TrimEnd('z', 'ł', ' ');
-            decimal dprice = Decimal.Parse(price, new CultureInfo("pl-PL"));
-            //Console.WriteLine(dprice);
-            string availability;
-            Status sAvailability = Status.avalible;
-            HtmlNode availavilityNode = doc.DocumentNode.SelectSingleNode($"{availabiltyXPath}");
-            if (availavilityNode != null)
-            {
-                availability = availavilityNode.InnerText.Trim();
-                sAvailability = Status.temporarilyUnavailable;
-            }
-            else
-            {
-                var availabiltyXPathLength = availabiltyXPath.Length - 13;
-                var secondAvavailabiltyXPath = availabiltyXPath.Remove(115, 13) + "/span/span";
-                availavilityNode = doc.DocumentNode.SelectSingleNode(secondAvavailabiltyXPath);
-                if(availavilityNode != null)
-                {
-                    availability = availavilityNode.InnerText.Trim();
-                    sAvailability = Status.temporarilyUnavailable;
-                }
-                else
-                {
-                    availability = "Dostępne";
-                }
-            }
-            //Console.WriteLine(availability);
-            return new Dish
-            {
-                Name = name,
-                Price = dprice,
-                Availability = sAvailability
-            };
-        }
-        public static async Task<IEnumerable<Dish>> ParseFromImperialrestauracja()
-        {
-            var client = new WebClient();
-            var downloadString1 = await client.DownloadStringTaskAsync("https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
-            var doc = new HtmlDocument();
-            doc.LoadHtml(downloadString1);
-            var baseXPath = "/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul";
-
-            var dish = new List<Dish>();
-
-            for (var i = 0; true; ++i )
-            {
-
-                Dish item = FindDishPropertiesFromImperialrestauracja(
-                                    doc,
-                                    $"{baseXPath}/li[{i + 1}]/div/div/div[1]/div[1]/h4",
-                                    $"{baseXPath}/li[{i + 1}]/div/div/div[3]",
-                                    $"{baseXPath}/li[{i + 1}]/div/div/div[1]/div[1]/div/span[2]/span");
-                if(item == null)
-                {
-                    break;
-                }
-                dish.Add(item);
-            }
-
-            return dish;
-        }
-    }
-
     //nowy parser
     class DishComparer : IEqualityComparer<Dish>
     {
@@ -185,7 +113,7 @@ namespace consoleasync
         }
     }
 
-    //--------------------------------- Klitka u witka(niedokończona) -------------------------------
+    //--------------------------------- Klitka u witka -------------------------------
     class DishParserFromKlitkaUWitka
     {
         public static async Task<IEnumerable<Dish>> FindDishes()
