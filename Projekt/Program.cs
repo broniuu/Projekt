@@ -23,11 +23,35 @@ namespace consoleasync
     {
         unavalible,
         temporarilyUnavailable,
-        avalible
+        avalible,
+        avalibleAtSelectedTimes
     }
     //---------------------------------IMPERIAL RESTAURACJA-------------------------------
     class DishParserFromImperialrestauracja
     {
+        public static async Task<IEnumerable<Dish>> FindDishes()
+        {
+            IEnumerable<Dish> dishes = null;
+            var baseXPath = "/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul";
+            
+            var client1 = new WebClient();
+            var downloadString1 = await client1.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
+            var doc1 = new HtmlDocument();
+            doc1.LoadHtml(downloadString1);
+            dishes = dishes.Union(DishParserGeneric.Parse(doc1, baseXPath, FindName, FindAvailability));
+
+            return dishes;
+        }
+        public static string FindName(HtmlNode price)
+        {
+            return "";
+        }
+
+        public static Status FindAvailability(HtmlNode price)
+        {
+            return Status.avalible;
+        }
+
         public static Dish FindDishPropertiesFromImperialrestauracja(HtmlDocument doc, string nameXPath, string priceXPath, string availabiltyXPath)
         {
             HtmlNode nameNode = doc.DocumentNode.SelectSingleNode($"{nameXPath}");
@@ -207,6 +231,13 @@ namespace consoleasync
             doc5.LoadHtml(downloadString5);
             dishes = dishes.Union(DishParserGeneric.Parse(doc5, baseXPath, FindName, FindAvailability));
 
+            //Wszystkie 
+            var client6 = new WebClient();
+            var downloadString6 = await client6.DownloadStringTaskAsync("https://klitkauwitka.pl/food/category/0/page-1");
+            var doc6 = new HtmlDocument();
+            doc6.LoadHtml(downloadString6);
+            dishes = dishes.Union(DishParserGeneric.Parse(doc6, baseXPath, FindName, FindAvailability));
+
             return dishes;
         }
 
@@ -222,6 +253,9 @@ namespace consoleasync
                 case "Chwilowo niedostępne":
                     availability = Status.temporarilyUnavailable;
                     break;
+                case "Dostępne tylko w określonych godzinach":
+                    availability = Status.avalibleAtSelectedTimes;
+                    break;
             }
             return availability;
         }
@@ -231,6 +265,7 @@ namespace consoleasync
             var dishName = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?.InnerText;
             switch (dishName)
             {
+                case "Dostępne tylko w określonych godzinach":
                 case "Niedostępne":
                 case "Promocja!":
                 case "Chwilowo niedostępne":
@@ -240,7 +275,10 @@ namespace consoleasync
                     {
                         dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?
                             .ChildNodes?.FirstOrDefault()?.InnerText;
-
+                        if (string.IsNullOrEmpty(dishName))
+                        {
+                            dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.InnerText;
+                        }
                         //console.writeline(dishname);
                     }
                     break;
@@ -274,34 +312,18 @@ namespace consoleasync
             //doc.LoadHtml(downloadString1);
             //var baseXPath = "/html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div";
             //var dishesFromKlitkaUWitka = DishParserGeneric.Parse(doc, baseXPath);
-            var dishes = await DishParserFromKlitkaUWitka.FindDishes();
-            Console.WriteLine(string.Join(Environment.NewLine, dishes.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
+            
+            // Klitka U Witka
+            var dishesFromKiltkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
+            //Console.WriteLine(string.Join(Environment.NewLine, dishesFromKiltkaUWitka.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
+            
+            Console.WriteLine();
+            Console.WriteLine("--------------------------------------------------");
+            Console.WriteLine();
+
+            // Imperial Restauracja
+            var dishesFromImperialrestauracja = await DishParserFromImperialrestauracja.FindDishes();
+            //Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
         }
     }
 }
-
-// XPathy w sekcji pizz
-
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[4]/div[2]/div/div[1]/a/h3
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[2]/div/div[2]/div/div[1]/a/h3
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[3]/div/div[2]/div/div[1]/a/h3
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[4]/div/div[2]/div/div[1]/a/h3
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[5]/div/div[2]/div/div[1]/a/h3
-
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div/div[2]/div/div[1]/a/h3
-
-// XPathy w sekcji sałatek
-
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[5]/div[2]/div/div[2]/h3
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[2]/div[5]/div[2]/div/div[2]/h3
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[3]/div[5]/div[2]/div/div[2]/h3
-
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[2]/div[2]/div/div[1]
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[2]/div[2]/div/div[2]/a/h3
-
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[5]/div[2]/div/div[1]
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[5]/div[2]/div/div[2]/h3
-
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[2]/div[3]/div[2]/div/div[3]/div/a[2] - pizza wybór "skąponuj danie"
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[1]/div[2]/div[2]/div/div[4]/div/a[2] - zapiekanka "do koszyka"
-// /html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div/div[3]/div/div[2]/div/div[3]/div/a[2] - pizza "do koszyka"
