@@ -8,7 +8,6 @@ using System.Web;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Diagnostics.CodeAnalysis;
 
 namespace consoleasync
 {
@@ -25,20 +24,6 @@ namespace consoleasync
         temporarilyUnavailable,
         avalible,
         avalibleAtSelectedTimes
-    }
-
-    //nowy parser
-    class DishComparer : IEqualityComparer<Dish>
-    {
-        public bool Equals(Dish x, Dish y)
-        {
-            return string.Equals(x.Name, y.Name, StringComparison.CurrentCultureIgnoreCase);
-        }
-
-        public int GetHashCode([DisallowNull] Dish obj)
-        {
-            return obj.Name.GetHashCode();
-        }
     }
     class DishParserGeneric
     {
@@ -203,7 +188,8 @@ namespace consoleasync
         public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
-            var baseXPath = "/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul";
+            var pageXPathNumber = 1;
+            var baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[{pageXPathNumber}]/div/div[2]/ul";
 
             //pizze
             var client1 = new WebClient();
@@ -212,13 +198,35 @@ namespace consoleasync
             doc1.LoadHtml(downloadString1);
             dishes = DishParserGeneric.Parse(doc1, baseXPath, FindName, FindAvailability);
 
+            foreach(var dish in dishes)
+            {
+                yield return dish;
+            }
+
+            ++pageXPathNumber;
+            baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[{pageXPathNumber}]/div/div[2]/ul";
             var client2 = new WebClient();
-            var downloadString2 = await client2.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial#menu-pizze");
+            var downloadString2 = await client2.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial#menu-danie-dnia-na-dowoz");
             var doc2 = new HtmlDocument();
             doc2.LoadHtml(downloadString1);
-            dishes = DishParserGeneric.Parse(doc2, baseXPath, FindName, FindAvailability);
-
-            return dishes;
+            var dishContainer = doc2.DocumentNode.SelectSingleNode(baseXPath);
+            var priceNode = dishContainer.ChildNodes.ElementAtOrDefault(1).ChildNodes.ElementAtOrDefault(1).ChildNodes.ElementAtOrDefault(1).ChildNodes
+                .ElementAtOrDefault(3);
+            var price = priceNode.InnerText.Trim('&','n','b','s','p',';','z','ł','\n',' ');
+            var dPrice = Decimal.Parse(price, new CultureInfo("pl-PL"));
+            var name = FindName(priceNode);
+            Dish localDish = new Dish
+            {
+                Name = name,
+                Price = dPrice,
+                Availability = Status.avalible
+            };
+            yield return localDish;
+        }
+        public static HtmlNode FindPrice(HtmlDocument doc, string priceXPath)
+        {
+            var priceNode = doc.DocumentNode.SelectSingleNode(priceXPath);
+            return priceNode;
         }
         public static string FindName(HtmlNode price)
         {
@@ -229,10 +237,11 @@ namespace consoleasync
             {
                 dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?
                     .InnerText.Trim();
+                if (string.IsNullOrEmpty(dishName))
+                {
+                    dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(3)?.InnerText?.Trim();
+                }
             }
-
-            // /html[1]/body[1]/main[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/ul[1]/li[1]/div[1]/div[1]/div[3]
-            // /html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul/li[1]/div/div/div[4]/div/button/text()[1]
             return dishName;
         }
 
