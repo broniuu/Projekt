@@ -26,31 +26,6 @@ namespace consoleasync
         avalible,
         avalibleAtSelectedTimes
     }
-    //---------------------------------IMPERIAL RESTAURACJA-------------------------------
-    class DishParserFromImperialrestauracja
-    {
-        public static async Task<IEnumerable<Dish>> FindDishes()
-        {
-            IEnumerable<Dish> dishes = null;
-            var baseXPath = "/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul";
-            
-            var client1 = new WebClient();
-            var downloadString1 = await client1.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
-            var doc1 = new HtmlDocument();
-            doc1.LoadHtml(downloadString1);
-            dishes = dishes.Union(DishParserGeneric.Parse(doc1, baseXPath, FindName, FindAvailability));
-
-            return dishes;
-        }
-        public static string FindName(HtmlNode price)
-        {
-            return "";
-        }
-
-        public static Status FindAvailability(HtmlNode price)
-        {
-            return Status.avalible;
-        }
 
     //nowy parser
     class DishComparer : IEqualityComparer<Dish>
@@ -75,6 +50,7 @@ namespace consoleasync
         {
             var dishContainer = doc.DocumentNode.SelectSingleNode(basePath);
             var prices = FindPrices(dishContainer);
+
             return prices
                 .Select(p => CreateDish(p,findName,findAvailability))
                 .Where(d => d != null)
@@ -85,7 +61,6 @@ namespace consoleasync
         private static Dish CreateDish(HtmlNode price, Func<HtmlNode, string> findName, Func<HtmlNode, Status> findAvailability)
         {
             var sPrice = price.InnerText.Trim().Trim(' ', 'z', 'ł');
-            //Console.WriteLine(sPrice);
             var dPrice = Decimal.Parse(sPrice, new CultureInfo("pl-PL"));
             var name = findName(price);
             var availability = findAvailability(price);
@@ -102,7 +77,7 @@ namespace consoleasync
             var children = dishContainer.ChildNodes;
             if (children == null || children.Count == 0)
                 return Enumerable.Empty<HtmlNode>();
-            var priceElements = children.Where(e => IsPrice(e.InnerText)); // znajdowanie HtmlNodeów z ceną, i dołączanie ich do kolekcji
+            var priceElements = children.Where(e => IsPrice(e.InnerText.Trim())); // znajdowanie HtmlNodeów z ceną, i dołączanie ich do kolekcji
             var recursivePriceElements = children.SelectMany(c => FindPrices(c)); // rekurencja i scalanie kolekcji
             return priceElements.Concat(recursivePriceElements); // zwracanie scalonej wersji kolekcji nodeów z cenami
         }
@@ -221,6 +196,68 @@ namespace consoleasync
             return string.Empty;
         }
     }
+
+    //---------------------------------IMPERIAL RESTAURACJA-------------------------------
+    class DishParserFromImperialrestauracja
+    {
+        public static async Task<IEnumerable<Dish>> FindDishes()
+        {
+            IEnumerable<Dish> dishes = null;
+            var baseXPath = "/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul";
+
+            //pizze
+            var client1 = new WebClient();
+            var downloadString1 = await client1.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial#menu-pizze");
+            var doc1 = new HtmlDocument();
+            doc1.LoadHtml(downloadString1);
+            dishes = DishParserGeneric.Parse(doc1, baseXPath, FindName, FindAvailability);
+
+            var client2 = new WebClient();
+            var downloadString2 = await client2.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial#menu-pizze");
+            var doc2 = new HtmlDocument();
+            doc2.LoadHtml(downloadString1);
+            dishes = DishParserGeneric.Parse(doc2, baseXPath, FindName, FindAvailability);
+
+            return dishes;
+        }
+        public static string FindName(HtmlNode price)
+        {
+
+            var dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?
+                .ElementAtOrDefault(3)?.InnerText.Trim();
+            if (string.IsNullOrEmpty(dishName))
+            {
+                dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?
+                    .InnerText.Trim();
+            }
+
+            // /html[1]/body[1]/main[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/ul[1]/li[1]/div[1]/div[1]/div[3]
+            // /html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul/li[1]/div/div/div[4]/div/button/text()[1]
+            return dishName;
+        }
+
+        public static Status FindAvailability(HtmlNode price)
+        {
+            var availability = Status.avalible;
+            var sAvailability = price.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes.FirstOrDefault()?.ChildNodes?.
+                FirstOrDefault()?.ChildNodes.FirstOrDefault()?.InnerText.Trim();
+            switch (sAvailability)
+            {
+                case "Niedostępne":
+                    availability = Status.unavalible;
+                    break;
+                case "Chwilowo Niedostępne":
+                    availability = Status.temporarilyUnavailable;
+                    break;
+            }
+            return availability;
+        }
+    }
+    class DishParserFromApollo
+    {
+
+    }
+
     class Program
     {
         static async Task Main(string[] args)
@@ -242,7 +279,7 @@ namespace consoleasync
             //var dishesFromKlitkaUWitka = DishParserGeneric.Parse(doc, baseXPath);
             
             // Klitka U Witka
-            var dishesFromKiltkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
+            //var dishesFromKiltkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
             //Console.WriteLine(string.Join(Environment.NewLine, dishesFromKiltkaUWitka.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
             
             Console.WriteLine();
@@ -251,7 +288,7 @@ namespace consoleasync
 
             // Imperial Restauracja
             var dishesFromImperialrestauracja = await DishParserFromImperialrestauracja.FindDishes();
-            //Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
+            Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
         }
     }
 }
