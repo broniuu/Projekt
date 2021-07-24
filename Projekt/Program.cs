@@ -14,8 +14,8 @@ namespace consoleasync
             Console.WriteLine("Hello World with C# 9.0!");
             Console.WriteLine("--------------------------------------------------");
             // Klitka U Witka
-            var dishesFromKiltkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
-            Console.WriteLine(string.Join(Environment.NewLine, dishesFromKiltkaUWitka.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
+            //var dishesFromKiltkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
+            //Console.WriteLine(string.Join(Environment.NewLine, dishesFromKiltkaUWitka.Select(d => $"{d.Name} - {d.Price} - {d.Availability}")));
 
             Console.WriteLine();
             Console.WriteLine("--------------------------------------------------");

@@ -39,11 +39,12 @@ namespace consoleasync
                         var price = priceNode.InnerText.Trim('&', 'n', 'b', 's', 'p', ';', 'z', 'ł', '\n', ' ');
                         var dPrice = Decimal.Parse(price, new CultureInfo("pl-PL"));
                         var name = FindName(priceNode);
+                        var availability = FindAvailability(priceNode);
                         Dish localDish = new Dish
                         {
                             Name = name,
                             Price = dPrice,
-                            Availability = Status.avalible
+                            Availability = availability
                         };
                         yield return localDish;
                     }
