@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace consoleasync
 {
-    //nowy parser
     class DishComparer : IEqualityComparer<Dish>
     {
         public bool Equals(Dish x, Dish y)
