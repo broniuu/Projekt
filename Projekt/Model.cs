@@ -7,8 +7,8 @@ namespace Projekt
 {
     public class DishContext : DbContext
     {
-        public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<DishData> DishDatas { get; set; }
+        public DbSet<Restaurant> Restaurants { get; set; }
 
         public string DbPath { get; private set; }
         
@@ -20,6 +20,7 @@ namespace Projekt
             => options.UseSqlite($"Data Source={DbPath}");
 
     }
+
     public class Restaurant
     {
         public int RestaurantId { get; set; }
@@ -27,6 +28,7 @@ namespace Projekt
 
         public List<DishData> DishDatas { get; } = new List<DishData>();
     }
+
     public class DishData
     {
         public int DishDataId { get; set; }
@@ -37,6 +39,7 @@ namespace Projekt
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; }
     }
+
     public enum Status
     {
         unavalible,

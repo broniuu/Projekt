@@ -33,26 +33,41 @@ namespace consoleasync
             using (var db = new DishContext())
             {
                 // Create
-                //Console.WriteLine("Inserting a dishes from Imperial Restauracja");
-                //foreach (var dish in dishesFromImperialrestauracja)
-                //{
-                    
-                //    db.Add(new DishData
-                //    {
-                //        Name = dish.Name,
-                //        Price = dish.Price,
-                //        Availability = (Projekt.Status)dish.Availability
-                //    });
-                //    db.SaveChanges();
-                //}
+                Console.WriteLine("Inserting Imperial Restauracja");
+                db.Add(new Restaurant { Name = "ImperialRestauracja" });
+                db.SaveChanges();
 
-                Console.WriteLine("deleting dishes from Imperial Restauracja");
-                var dishDatas = db.DishDatas;
-                foreach (var dish in dishDatas)
+                // Read
+                Console.WriteLine("Querying for a Restaurant");
+                var restaurant = db.Restaurants
+                    .OrderBy(b => b.RestaurantId)
+                    .First();
+
+                // Update
+                Console.WriteLine("Adding a dishes");
+                foreach (var dish in dishesFromImperialrestauracja)
                 {
-                    db.Remove(dish);
+
+                    restaurant.DishDatas.Add(new DishData
+                    {
+                        Name = dish.Name,
+                        Price = dish.Price,
+                        Availability = (Projekt.Status)dish.Availability
+                    });
                     db.SaveChanges();
                 }
+
+                Console.WriteLine("Delete the restaurant");
+                db.Remove(restaurant);
+                db.SaveChanges();
+
+                //Console.WriteLine("deleting dishes from Imperial Restauracja");
+                //var dishDatas = db.DishDatas;
+                //foreach (var dish in dishDatas)
+                //{
+                //    db.Remove(dish);
+                //    db.SaveChanges();
+                //}
 
                 //Update
                 //Console.WriteLine("Updating the dish and adding a post");
