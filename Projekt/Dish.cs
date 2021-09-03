@@ -1,4 +1,6 @@
-﻿namespace consoleasync
+﻿using Projekt;
+
+namespace consoleasync
 {
     class Dish
     {

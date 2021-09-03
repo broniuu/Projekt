@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using HtmlAgilityPack;
 using System.Globalization;
+using Projekt;
 
 namespace consoleasync
 {
