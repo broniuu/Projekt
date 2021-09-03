@@ -28,10 +28,13 @@ namespace consoleasync
 
         private static Status FindAvailability(HtmlNode price)
         {
+            
             var availability = Status.avalible;
-            var sDishAvailability = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?.InnerText;
+            var sDishAvailability = ""; // Do zrobienia
+
             // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
             // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[5]/div/div/div[1]/div[1]/div/span
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[1]/div[1]/h4/text()
             switch (sDishAvailability)
             {
                 case "Niedostępne":
@@ -48,38 +51,50 @@ namespace consoleasync
         }
 
         private static string FindName(HtmlNode price)
-        {           
-            var dishName = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?.InnerText;
+        {
+            // price.ParentNode.ChildNodes.Items[1].ChildNodes.Items[1].ChildNodes.Items[3].ChildNodes.Items[0]  Name: "#text"   
+
+            var dishName = price?
+                .ParentNode?
+                .ChildNodes?.ElementAtOrDefault(1)?
+                .ChildNodes?.ElementAtOrDefault(1)?
+                .ChildNodes?.ElementAtOrDefault(3)?
+                .ChildNodes?.ElementAtOrDefault(0)?
+                .InnerText;
             // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[1]/div[1]/h4/text()
             // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
-            switch (dishName)
-            {
-                case "Dostępne tylko w określonych godzinach":
-                case "Niedostępne":
-                case "Promocja!":
-                case "Chwilowo niedostępne":
-                    dishName = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.ElementAtOrDefault(1)?
-                        .ChildNodes.FirstOrDefault().InnerText;
-                    if (string.IsNullOrEmpty(dishName))
-                    {
-                        dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?
-                            .ChildNodes?.FirstOrDefault()?.InnerText;
-                        if (string.IsNullOrEmpty(dishName))
-                        {
-                            dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.InnerText;
-                        }
-                        //console.writeline(dishname);
-                    }
-                    break;
-            }
-            var sPrice = price.InnerText;
-            dishName = dishName?.Replace(sPrice, string.Empty);
-            dishName = HttpUtility.HtmlDecode(dishName);
-            if (!string.IsNullOrWhiteSpace(dishName))
-            {
-                return dishName == "20 cm: "? string.Empty : dishName;
-            }
-            return string.Empty;
+            //switch (dishName)
+            //{
+            //    case "Dostępne tylko w określonych godzinach":
+            //    case "Niedostępne":
+            //    case "Promocja!":
+            //    case "Chwilowo niedostępne":
+            //        dishName = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.ElementAtOrDefault(1)?
+            //            .ChildNodes.FirstOrDefault().InnerText;
+            //        if (string.IsNullOrEmpty(dishName))
+            //        {
+            //            dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?
+            //                .ChildNodes?.FirstOrDefault()?.InnerText;
+            //            if (string.IsNullOrEmpty(dishName))
+            //            {
+            //                dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.InnerText;
+            //            }
+            //            //console.writeline(dishname);
+            //        }
+            //        break;
+            //}
+            //var sPrice = price.InnerText;
+
+            //dishName = dishName?.Replace(sPrice, string.Empty);
+            //dishName = HttpUtility.HtmlDecode(dishName);
+            //if (!string.IsNullOrWhiteSpace(dishName))
+            //{
+            //    return dishName == "20 cm: "? string.Empty : dishName;
+            //}
+            //return string.Empty;
+            
+
+            return dishName == null ? string.Empty : dishName.Trim();
         }
     }
 }
