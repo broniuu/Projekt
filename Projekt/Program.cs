@@ -24,18 +24,24 @@ namespace consoleasync
             Console.WriteLine();
 
             // Imperial Restauracja
-            var dishesFromImperialrestauracja = new List<Dish>();
-            await foreach (var dish in DishParserFromImperialrestauracja.FindDishes())
-            {
-                dishesFromImperialrestauracja.Add(dish);
-            }
-            Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
+            //var dishesFromImperialrestauracja = new List<Dish>();
+            //await foreach (var dish in DishParserFromImperialrestauracja.FindDishes())
+            //{
+            //    dishesFromImperialrestauracja.Add(dish);
+            //}
+            //Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
 
-            var restaurantName = "Imperial Restauracja";
-            UpsertDishes(dishesFromImperialrestauracja, restaurantName);
+            //var restaurantName = "Imperial Restauracja";
+            //UpsertDishes(dishesFromImperialrestauracja, restaurantName);
+
+            // Klitka u witka
+            Console.WriteLine("-------------------------------------------");
+            var dishesFromKlitkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
+            Console.WriteLine(string.Join(Environment.NewLine, dishesFromKlitkaUWitka.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
         }
 
-        private static void UpsertDishes(List<Dish> dishesFromImperialrestauracja, string restaurantName)
+        //Funkcja UPSERT
+        private static void UpsertDishes(List<Dish> dishesFromRestaurant, string restaurantName)
         {
             using (var db = new DishContext())
             {
@@ -52,9 +58,9 @@ namespace consoleasync
                     db.SaveChanges();
                 }
 
-                Console.WriteLine("Querying for a Restaurant");
+                Console.WriteLine($"Upserting dishes form {restaurant}");
                 //var imperialDishesData = restaurant.DishDatas;
-                foreach (var dish in dishesFromImperialrestauracja)
+                foreach (var dish in dishesFromRestaurant)
                 {
                     //Read
                     var dishData = db.DishDatas
@@ -78,24 +84,6 @@ namespace consoleasync
                 }
                 db.SaveChanges();
 
-                //Console.WriteLine("Delete the restaurant");
-                //db.Remove(restaurant);
-                //db.SaveChanges();
-
-                //Console.WriteLine("deleting dishes from Imperial Restauracja");
-                //var dishDatas = db.DishDatas;
-                //foreach (var dish in dishDatas)
-                //{
-                //    db.Remove(dish);
-                //    db.SaveChanges();
-                //}
-
-                //Update
-                //Console.WriteLine("Updating the dish and adding a post");
-                //dish.Name = dishesFromImperialrestauracja.First().Name;
-                //dish.Price = dishesFromImperialrestauracja.First().Price;
-                //dish.Availability = (Projekt.Status)dishesFromImperialrestauracja.First().Availability;
-                //db.SaveChanges();
             }
         }
     }

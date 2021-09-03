@@ -14,52 +14,14 @@ namespace consoleasync
         public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
-            var baseXPath = "/html/body/div[1]/section/div/div[3]/div[2]/div[2]/div[1]/div[3]/div";
-            //Pizze
-            for (var i=1; i<4; ++i)
-            {
-                var client1 = new WebClient();
-                var downloadString1 = await client1.DownloadStringTaskAsync($"https://klitkauwitka.pl/food/category/2016/pizza/page-{i}");
-                var doc1 = new HtmlDocument();
-                doc1.LoadHtml(downloadString1);
-                var localDishes = DishParserGeneric.Parse(doc1, baseXPath, FindName, FindAvailability);
-                dishes = (i == 1 ? localDishes : dishes.Union(localDishes));
-            }
+            var baseXPath = "/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul";
+            // 
 
-            //Sałatki
-            var client2 = new WebClient();
-            var downloadString2 = await client2.DownloadStringTaskAsync("https://klitkauwitka.pl/food/category/2246/salatki");
-            var doc2 = new HtmlDocument();
-            doc2.LoadHtml(downloadString2);
-            dishes = dishes.Union(DishParserGeneric.Parse(doc2, baseXPath, FindName, FindAvailability));
-
-            //Zapiekanki
-            var client3 = new WebClient();
-            var downloadString3 = await client3.DownloadStringTaskAsync("https://klitkauwitka.pl/food/category/1287/zapiekanki/page-1");
-            var doc3 = new HtmlDocument();
-            doc3.LoadHtml(downloadString3);
-            dishes = dishes.Union(DishParserGeneric.Parse(doc3, baseXPath, FindName, FindAvailability));
-
-            //Sosy do Pizzy
-            var client4 = new WebClient();
-            var downloadString4 = await client4.DownloadStringTaskAsync("https://klitkauwitka.pl/food/category/1288/sosy-do-pizzy");
-            var doc4 = new HtmlDocument();
-            doc4.LoadHtml(downloadString4);
-            dishes = dishes.Union(DishParserGeneric.Parse(doc4, baseXPath, FindName, FindAvailability));
-
-            //Zimne napoje
-            var client5 = new WebClient();
-            var downloadString5 = await client5.DownloadStringTaskAsync("https://klitkauwitka.pl/food/category/2119/zimne-napoje");
-            var doc5 = new HtmlDocument();
-            doc5.LoadHtml(downloadString5);
-            dishes = dishes.Union(DishParserGeneric.Parse(doc5, baseXPath, FindName, FindAvailability));
-
-            //Wszystkie 
-            var client6 = new WebClient();
-            var downloadString6 = await client6.DownloadStringTaskAsync("https://klitkauwitka.pl/food/category/0/page-1");
-            var doc6 = new HtmlDocument();
-            doc6.LoadHtml(downloadString6);
-            dishes = dishes.Union(DishParserGeneric.Parse(doc6, baseXPath, FindName, FindAvailability));
+            var client = new WebClient();
+            var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
+            var doc = new HtmlDocument();
+            doc.LoadHtml(downloadString);
+            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
 
             return dishes;
         }
@@ -68,6 +30,8 @@ namespace consoleasync
         {
             var availability = Status.avalible;
             var sDishAvailability = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?.InnerText;
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[5]/div/div/div[1]/div[1]/div/span
             switch (sDishAvailability)
             {
                 case "Niedostępne":
@@ -86,6 +50,8 @@ namespace consoleasync
         private static string FindName(HtmlNode price)
         {           
             var dishName = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?.InnerText;
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[1]/div[1]/h4/text()
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
             switch (dishName)
             {
                 case "Dostępne tylko w określonych godzinach":
