@@ -14,15 +14,18 @@ namespace consoleasync
         public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
-            var baseXPath = "/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul";
-            // 
+            for (var i = 1; i < 4; ++i)
+            {
+                var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[{i}]/div/div[2]/ul";
+                // 
 
-            var client = new WebClient();
-            var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
-            var doc = new HtmlDocument();
-            doc.LoadHtml(downloadString);
-            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
-
+                var client = new WebClient();
+                var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
+                var doc = new HtmlDocument();
+                doc.LoadHtml(downloadString);
+                var localDishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
+                dishes = (i == 1 ? localDishes : dishes.Union(localDishes));
+            }
             return dishes;
         }
 
@@ -52,49 +55,44 @@ namespace consoleasync
 
         private static string FindName(HtmlNode price)
         {
-            // price.ParentNode.ChildNodes.Items[1].ChildNodes.Items[1].ChildNodes.Items[3].ChildNodes.Items[0]  Name: "#text"   
-
-            var dishName = price?
+            var dishNameCointaner = price?.ParentNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode;
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
+            string dishName = null;
+            for (var i = 0; i < 4; ++i)
+            {
+                var nameSearcher = price?
                 .ParentNode?
                 .ChildNodes?.ElementAtOrDefault(1)?
                 .ChildNodes?.ElementAtOrDefault(1)?
-                .ChildNodes?.ElementAtOrDefault(3)?
+                .ChildNodes?.ElementAtOrDefault(i)?
                 .ChildNodes?.ElementAtOrDefault(0)?
                 .InnerText;
+                if (nameSearcher != null)
+                {
+                    dishName = nameSearcher;
+                }
+                
+            }
             // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[1]/div[1]/h4/text()
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
-            //switch (dishName)
-            //{
-            //    case "Dostępne tylko w określonych godzinach":
-            //    case "Niedostępne":
-            //    case "Promocja!":
-            //    case "Chwilowo niedostępne":
-            //        dishName = price?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.ElementAtOrDefault(1)?
-            //            .ChildNodes.FirstOrDefault().InnerText;
-            //        if (string.IsNullOrEmpty(dishName))
-            //        {
-            //            dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes?.FirstOrDefault()?
-            //                .ChildNodes?.FirstOrDefault()?.InnerText;
-            //            if (string.IsNullOrEmpty(dishName))
-            //            {
-            //                dishName = price?.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.InnerText;
-            //            }
-            //            //console.writeline(dishname);
-            //        }
-            //        break;
-            //}
-            //var sPrice = price.InnerText;
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[1]/div[1]/h4/text()
 
-            //dishName = dishName?.Replace(sPrice, string.Empty);
-            //dishName = HttpUtility.HtmlDecode(dishName);
-            //if (!string.IsNullOrWhiteSpace(dishName))
-            //{
-            //    return dishName == "20 cm: "? string.Empty : dishName;
-            //}
-            //return string.Empty;
-            
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[1]/div[1]/h4/text()
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[2]/div/button/text()[1]
 
             return dishName == null ? string.Empty : dishName.Trim();
+        }
+
+        private static string FindNameNode(HtmlNode dishNode)
+        {
+            var children = dishNode.ChildNodes;
+
+            var nameElement = children.FindFirst("h4");
+            if(nameElement != null)
+            {
+                return nameElement;
+            }
+            FindNameNode()
+            return null;
         }
     }
 }
