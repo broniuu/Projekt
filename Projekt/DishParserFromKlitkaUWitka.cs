@@ -17,6 +17,8 @@ namespace consoleasync
         {
             IEnumerable<Dish> dishes = null;
             var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul";
+
+            //Pizza 
             var client = new WebClient();
             var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
             var doc = new HtmlDocument();
@@ -78,7 +80,7 @@ namespace consoleasync
 
         private static string FindName(HtmlNode priceNode)
         {
-            var dishNameCointaner = priceNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode;
+            var dishNameCointaner = priceNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode;
 
             var nameElement = FindNode(dishNameCointaner, "h4")?.FirstChild;
 
@@ -112,7 +114,7 @@ namespace consoleasync
             }
             var children = dishNode.ChildNodes;
 
-            var nameElement = children.FindFirst("nameOfNode");
+            var nameElement = children.FindFirst(nameOfNode);
             if(nameElement != null)
             {
                 return nameElement;
