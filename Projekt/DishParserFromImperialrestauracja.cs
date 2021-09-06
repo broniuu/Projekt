@@ -51,7 +51,6 @@ namespace consoleasync
                     }
                 }
             }
-
         }
         public static IEnumerable<HtmlNode> FindPriceNodes(HtmlNode dishContainerParent)
         {

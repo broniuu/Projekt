@@ -36,7 +36,11 @@ namespace consoleasync
 
             // Klitka u witka
             Console.WriteLine("-------------------------------------------");
-            var dishesFromKlitkaUWitka = await DishParserFromKlitkaUWitka.FindDishes();
+            var dishesFromKlitkaUWitka = new List<Dish>();
+            await foreach (var dish in DishParserFromKlitkaUWitka.FindDishes())
+            {
+                dishesFromKlitkaUWitka.Add(dish);
+            }
             Console.WriteLine(string.Join(Environment.NewLine, dishesFromKlitkaUWitka.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
         }
 
