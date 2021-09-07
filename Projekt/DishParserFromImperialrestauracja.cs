@@ -21,7 +21,7 @@ namespace consoleasync
             var downloadString = await client.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
             var doc = new HtmlDocument();
             doc.LoadHtml(downloadString);
-            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
+            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability, BackToDishNode);
 
             foreach (var dish in dishes)
             {
@@ -99,6 +99,10 @@ namespace consoleasync
                     break;
             }
             return availability;
+        }
+        private static HtmlNode BackToDishNode(HtmlNode priceNode)
+        {
+            return DishParserGeneric.FindAncestorNode(priceNode, "ul");
         }
     }
 }

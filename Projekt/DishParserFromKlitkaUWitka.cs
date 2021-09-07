@@ -7,13 +7,14 @@ using System.Linq;
 using Projekt;
 using System;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace consoleasync
 {
     //--------------------------------- Klitka u witka -------------------------------
     class DishParserFromKlitkaUWitka
     {
-        public static async IAsyncEnumerable<Dish> FindDishes()
+        public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
             var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul";
@@ -23,37 +24,46 @@ namespace consoleasync
             var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
             var doc = new HtmlDocument();
             doc.LoadHtml(downloadString);
-            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
+            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability, BackToDishNode);
 
-            foreach (var dish in dishes)
-            {
-                yield return dish;
-            }
+            return dishes;
+            //foreach (var dish in dishes)
+            //{
+            //    yield return dish;
+            //}
 
-            // Rest of dishes
-            for (var i=2; i<5; ++i)
+        }
+        private IEnumerable<string> FindPizzaPrices(HtmlNode buttonNode)
+        {
+            var pizzaPrices = new string[3];
+            var pizzaSizes = new string[3] { " mała", " średnia", " duża" };
+            var priceContainer = buttonNode?.ParentNode?.ParentNode?.ParentNode?.ChildNodes;            
+            for(var i = 0; i <3; ++i)
             {
-                baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[{i}]/div/div[2]/ul";
-                var dishContainer = doc.DocumentNode.SelectSingleNode(baseXPath);
-                foreach (var priceNode in FindNodes(dishContainer, "button"))
-                {
-                    if (priceNode != null)
-                    {
-                        var price = FindPrice(priceNode);
-                        var name = FindName(priceNode);
-                        var availability = FindAvailability(priceNode);
-                        Dish localDish = new Dish
-                        {
-                            Name = name,
-                            Price = price,
-                            Availability = availability
-                        };
-                        yield return localDish;
-                    }
-                }
+                pizzaPrices[i] = priceContainer?.ElementAtOrDefault(i + 3).InnerText;
+                ++i;
             }
+            return pizzaPrices;
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[3]
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[4]
         }
 
+        private bool OtherSizeExists(HtmlNode buttonNode)
+        {
+            var alternativePrizeNode = buttonNode?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.ElementAtOrDefault(3);
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/span
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[3]
+
+            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[1]/div[2]
+            if (alternativePrizeNode != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
         private static Status FindAvailability(HtmlNode price)
         {
             
@@ -82,7 +92,7 @@ namespace consoleasync
         {
             var dishNameCointaner = priceNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode;
 
-            var nameElement = FindNode(dishNameCointaner, "h4")?.FirstChild;
+            var nameElement = DishParserGeneric.FindNode(dishNameCointaner, "h4")?.FirstChild;
 
             return nameElement?.InnerText?.Trim() ?? string.Empty;
 
@@ -95,39 +105,9 @@ namespace consoleasync
             return price;
         }
 
-        // aby poprawnie użyć tej funkcji musisz mieć unikalną nazwę node'a (np. "h4", "button"). Jeśli nie to musisz potem zawęzić pole poszukiwań
-        private static IEnumerable<HtmlNode> FindNodes(HtmlNode dishContainer, string nameOfNode)
+        private static HtmlNode BackToDishNode(HtmlNode priceNode)
         {
-            var children = dishContainer.ChildNodes;
-            if (children == null || children.Count == 0)
-                return Enumerable.Empty<HtmlNode>();
-            var priceElements = children.Where(e => e.Name == nameOfNode); // znajdowanie HtmlNodeów z ceną, i dołączanie ich do kolekcji
-            var recursivePriceElements = children.SelectMany(c => FindNodes(c, nameOfNode)); // rekurencja i scalanie kolekcji
-            return priceElements.Concat(recursivePriceElements); // zwracanie scalonej wersji kolekcji nodeów z cenami
-        }
-
-        private static HtmlNode FindNode(HtmlNode dishNode, string nameOfNode)
-        {
-            if(dishNode == null)
-            {
-                return null;
-            }
-            var children = dishNode.ChildNodes;
-
-            var nameElement = children.FindFirst(nameOfNode);
-            if(nameElement != null)
-            {
-                return nameElement;
-            }
-            foreach (var child in children)
-            {
-                var childNameElement = FindNode(child, nameOfNode);
-                if (childNameElement != null)
-                {
-                    return childNameElement;
-                }
-            }
-            return null;
+            return DishParserGeneric.FindAncestorNode(priceNode, "li");
         }
     }
 }

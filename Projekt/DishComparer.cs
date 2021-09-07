@@ -8,12 +8,15 @@ namespace consoleasync
     {
         public bool Equals(Dish x, Dish y)
         {
-            return string.Equals(x.Name, y.Name, StringComparison.CurrentCultureIgnoreCase);
+            if (string.Equals(x.Name, y.Name, StringComparison.CurrentCultureIgnoreCase) && x.Price == y.Price)
+                return true;
+            else
+                return false ;
         }
 
-        public int GetHashCode([DisallowNull] Dish obj)
+        public int GetHashCode([DisallowNull] Dish dish)
         {
-            return obj.Name.GetHashCode();
+            return dish.Name.GetHashCode() + dish.Price.GetHashCode();
         }
     }
 }
