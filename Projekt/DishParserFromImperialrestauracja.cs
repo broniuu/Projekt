@@ -18,8 +18,6 @@ namespace consoleasync
             {
                 var baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[{i}]/div/div[2]/ul";
 
-                // /html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul/li[1]
-                // /html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[2]/div/div[2]/ul/li
                 var client = new WebClient();
                 var downloadString = await client.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
                 var doc = new HtmlDocument();
@@ -39,18 +37,22 @@ namespace consoleasync
             return nameElement?.InnerText?.Trim() ?? string.Empty;
         }
 
-        public static Status FindAvailability(HtmlNode price)
+        public static Status FindAvailability(HtmlNode priceNode)
         {
             var availability = Status.avalible;
-            var sAvailability = price.ParentNode?.ParentNode?.ChildNodes?.FirstOrDefault()?.ChildNodes.FirstOrDefault()?.ChildNodes?.
-                FirstOrDefault()?.ChildNodes.FirstOrDefault()?.InnerText.Trim();
-            switch (sAvailability)
+            var dishNode = DishParserGeneric.FindAncestorNode(priceNode, "li");
+            var availabilityNode = DishParserGeneric.FindNode(dishNode, "span");
+            var sDishAvailability = availabilityNode.InnerText.Trim();
+            switch (sDishAvailability)
             {
                 case "Niedostępne":
                     availability = Status.unavalible;
                     break;
-                case "Chwilowo Niedostępne":
+                case "Chwilowo niedostępne":
                     availability = Status.temporarilyUnavailable;
+                    break;
+                case "Dostępne tylko w określonych godzinach":
+                    availability = Status.avalibleAtSelectedTimes;
                     break;
             }
             return availability;

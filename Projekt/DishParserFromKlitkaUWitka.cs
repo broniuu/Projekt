@@ -33,15 +33,12 @@ namespace consoleasync
 
         }
 
-        private static Status FindAvailability(HtmlNode price)
+        private static Status FindAvailability(HtmlNode priceNode)
         {
-            
             var availability = Status.avalible;
-            var sDishAvailability = ""; // Do zrobienia
-
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/text()[1]
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[5]/div/div/div[1]/div[1]/div/span
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[1]/div[1]/h4/text()
+            var dishNode = DishParserGeneric.FindAncestorNode(priceNode, "li");
+            var availabilityNode = DishParserGeneric.FindNode(dishNode, "span");
+            var sDishAvailability = availabilityNode.InnerText.Trim();
             switch (sDishAvailability)
             {
                 case "Niedostępne":
