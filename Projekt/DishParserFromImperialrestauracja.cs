@@ -11,7 +11,7 @@ namespace consoleasync
 {
     class DishParserFromImperialrestauracja
     {
-        public static async IAsyncEnumerable<Dish> FindDishes()
+        public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
             var baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[1]/div/div[2]/ul";
@@ -23,65 +23,15 @@ namespace consoleasync
             doc.LoadHtml(downloadString);
             dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
 
-            foreach (var dish in dishes)
-            {
-                yield return dish;
-            }
-
-            //Rest of dishes
-            for (var i = 2; i < 11; ++i)
-            {
-                baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[{i}]/div/div[2]/ul";
-                var dishContainerParent = doc.DocumentNode.SelectSingleNode(baseXPath);
-                foreach (var priceNode in FindPriceNodes(dishContainerParent))
-                {
-                    if(priceNode != null)
-                    {
-                        var price = priceNode.InnerText.Trim('&', 'n', 'b', 's', 'p', ';', 'z', 'ł', '\n', ' ');
-                        var dPrice = Decimal.Parse(price, new CultureInfo("pl-PL"));
-                        var name = FindName(priceNode);
-                        var availability = FindAvailability(priceNode);
-                        Dish localDish = new Dish
-                        {
-                            Name = name,
-                            Price = dPrice,
-                            Availability = availability
-                        };
-                        yield return localDish;
-                    }
-                }
-            }
+            return dishes;
         }
-        public static IEnumerable<HtmlNode> FindPriceNodes(HtmlNode dishContainerParent)
-        {
-            var dishContainers = dishContainerParent.ChildNodes;
-            foreach(var container in dishContainers)
-            {
-                var priceNode = container?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?
-                    .ElementAtOrDefault(3);
-                yield return priceNode;
-            }
-        }
-        public static HtmlNode FindPrice(HtmlDocument doc, string priceXPath)
-        {
-            var priceNode = doc.DocumentNode.SelectSingleNode(priceXPath);
-            return priceNode;
-        }
-        public static string FindName(HtmlNode price)
+        public static string FindName(HtmlNode priceNode)
         {
 
-            var dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?
-                .ElementAtOrDefault(3)?.InnerText.Trim();
-            if (string.IsNullOrEmpty(dishName))
-            {
-                dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?
-                    .InnerText.Trim();
-                if (string.IsNullOrEmpty(dishName))
-                {
-                    dishName = price.ParentNode?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(1)?.ChildNodes?.ElementAtOrDefault(3)?.InnerText?.Trim();
-                }
-            }
-            return dishName;
+            var dishNode = DishParserGeneric.FindAncestorNode(priceNode, "li");
+            var nameElement = DishParserGeneric.FindNode(dishNode, "h4")?.FirstChild;
+
+            return nameElement?.InnerText?.Trim() ?? string.Empty;
         }
 
         public static Status FindAvailability(HtmlNode price)
@@ -99,10 +49,6 @@ namespace consoleasync
                     break;
             }
             return availability;
-        }
-        private static HtmlNode BackToDishNode(HtmlNode priceNode)
-        {
-            return DishParserGeneric.FindAncestorNode(priceNode, "ul");
         }
     }
 }

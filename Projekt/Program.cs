@@ -24,12 +24,8 @@ namespace consoleasync
             Console.WriteLine();
 
             // Imperial Restauracja
-            //var dishesFromImperialrestauracja = new List<Dish>();
-            //await foreach (var dish in DishParserFromImperialrestauracja.FindDishes())
-            //{
-            //    dishesFromImperialrestauracja.Add(dish);
-            //}
-            //Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
+            var dishesFromImperialrestauracja = await DishParserFromImperialrestauracja.FindDishes();
+            Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
 
             //var restaurantName = "Imperial Restauracja";
             //UpsertDishes(dishesFromImperialrestauracja, restaurantName);
