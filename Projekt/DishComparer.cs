@@ -8,7 +8,7 @@ namespace consoleasync
     {
         public bool Equals(Dish x, Dish y)
         {
-            if (string.Equals(x.Name, y.Name, StringComparison.CurrentCultureIgnoreCase) && x.Price == y.Price)
+            if (x.Price == y.Price)
                 return true;
             else
                 return false ;
@@ -16,7 +16,7 @@ namespace consoleasync
 
         public int GetHashCode([DisallowNull] Dish dish)
         {
-            return dish.Name.GetHashCode() + dish.Price.GetHashCode();
+            return dish.Price.GetHashCode();
         }
     }
 }

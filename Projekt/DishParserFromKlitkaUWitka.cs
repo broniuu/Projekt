@@ -24,7 +24,7 @@ namespace consoleasync
             var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
             var doc = new HtmlDocument();
             doc.LoadHtml(downloadString);
-            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability, BackToDishNode);
+            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
 
             return dishes;
             //foreach (var dish in dishes)
@@ -33,37 +33,7 @@ namespace consoleasync
             //}
 
         }
-        private IEnumerable<string> FindPizzaPrices(HtmlNode buttonNode)
-        {
-            var pizzaPrices = new string[3];
-            var pizzaSizes = new string[3] { " mała", " średnia", " duża" };
-            var priceContainer = buttonNode?.ParentNode?.ParentNode?.ParentNode?.ChildNodes;            
-            for(var i = 0; i <3; ++i)
-            {
-                pizzaPrices[i] = priceContainer?.ElementAtOrDefault(i + 3).InnerText;
-                ++i;
-            }
-            return pizzaPrices;
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[3]
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[4]
-        }
 
-        private bool OtherSizeExists(HtmlNode buttonNode)
-        {
-            var alternativePrizeNode = buttonNode?.ParentNode?.ParentNode?.ParentNode?.ChildNodes?.ElementAtOrDefault(3);
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[6]/div/button/span
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul/li[2]/div/div/div[3]
-
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[1]/div[2]
-            if (alternativePrizeNode != null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
         private static Status FindAvailability(HtmlNode price)
         {
             
@@ -90,24 +60,13 @@ namespace consoleasync
 
         private static string FindName(HtmlNode priceNode)
         {
-            var dishNameCointaner = priceNode?.ParentNode?.ParentNode?.ParentNode?.ParentNode;
+            var dishNode = DishParserGeneric.FindAncestorNode(priceNode, "li");
 
-            var nameElement = DishParserGeneric.FindNode(dishNameCointaner, "h4")?.FirstChild;
+            var nameElement = DishParserGeneric.FindNode(dishNode, "h4")?.FirstChild;
 
             return nameElement?.InnerText?.Trim() ?? string.Empty;
 
         }
-        private static Decimal FindPrice(HtmlNode priceNode)
-        {
-            var sPrice = priceNode?.ChildNodes?.ElementAtOrDefault(2)?.InnerText.Trim('&', 'n', 'b', 's', 'p', ';', 'z', 'ł', '\n', ' ');
-            var price = Decimal.Parse(sPrice, new CultureInfo("pl-PL"));
-            // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[2]/div/button/text()[1]
-            return price;
-        }
 
-        private static HtmlNode BackToDishNode(HtmlNode priceNode)
-        {
-            return DishParserGeneric.FindAncestorNode(priceNode, "li");
-        }
     }
 }

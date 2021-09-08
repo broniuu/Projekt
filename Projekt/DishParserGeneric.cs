@@ -14,30 +14,25 @@ namespace consoleasync
             HtmlDocument doc, 
             string basePath, 
             Func<HtmlNode, string> findName, 
-            Func<HtmlNode, Status> findAvailability,
-            Func<HtmlNode, HtmlNode> backToDishNode)
+            Func<HtmlNode, Status> findAvailability)
         {
             var dishContainer = doc.DocumentNode.SelectSingleNode(basePath);
             var prices = FindPrices(dishContainer);
-            var segregatedPrices = prices.GroupBy(
-                p => backToDishNode(p),
-                p => p
-                //(dishNode, priceNodes) => new
-                //{
-                //    Key = dishNode,
-                //    Count = priceNodes.Count()
-                //}
-                );
-            IEnumerable<Dish> dishes = null;
-            foreach (var dishNode in segregatedPrices)
-            {
-                 var newDishes = dishNode
-                    .Select(p => CreateDish(p, findName, findAvailability))
-                    .Where(d => d != null)
-                    .Distinct(new DishComparer());
-                dishes = dishNode == segregatedPrices.FirstOrDefault() ? newDishes : dishes.Union(newDishes);
-            }
+            var dishes = prices
+                .Select(p => CreateDish(p, findName, findAvailability))
+                .Where(d => d != null);
+
+
+            var dishGroups = dishes.GroupBy(d => d.Name);
+            dishes = dishGroups.SelectMany(dg => dg.Distinct(new DishComparer()));
             return dishes;
+
+            //    foreach (var dishNode in segregatedPrices)
+            //    {
+            //         var newDishes = dishNode
+            //        dishes = dishNode == segregatedPrices.FirstOrDefault() ? newDishes : dishes.Union(newDishes);
+            //    }
+            //    return dishes;
         }
 
         private static Dish CreateDish(HtmlNode price, Func<HtmlNode, string> findName, Func<HtmlNode, Status> findAvailability)

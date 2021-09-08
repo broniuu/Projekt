@@ -21,7 +21,7 @@ namespace consoleasync
             var downloadString = await client.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
             var doc = new HtmlDocument();
             doc.LoadHtml(downloadString);
-            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability, BackToDishNode);
+            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
 
             foreach (var dish in dishes)
             {
