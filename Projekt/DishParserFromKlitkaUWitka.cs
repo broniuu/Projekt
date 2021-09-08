@@ -17,20 +17,19 @@ namespace consoleasync
         public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
-            var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul";
+            for (var i = 1; i < 6; ++i)
+            {
+                var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[{i}]/div/div[2]/ul";
 
-            //Pizza 
-            var client = new WebClient();
-            var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
-            var doc = new HtmlDocument();
-            doc.LoadHtml(downloadString);
-            dishes = DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability);
-
-            return dishes;
-            //foreach (var dish in dishes)
-            //{
-            //    yield return dish;
-            //}
+                var client = new WebClient();
+                var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
+                var doc = new HtmlDocument();
+                doc.LoadHtml(downloadString);
+                dishes = i == 1
+                    ? DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability)
+                    : dishes.Union(DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability));
+            }
+                return dishes;
 
         }
 
