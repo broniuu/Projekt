@@ -25,19 +25,15 @@ namespace consoleasync
 
             var dishGroups = dishes.GroupBy(d => d.Name);
             dishes = dishGroups.SelectMany(dg => dg.Distinct(new DishComparer()));
+            dishGroups = dishes.GroupBy(d => d.Name);
+            dishes = dishGroups.SelectMany(dg => AddDishSizes(dg));
+            
             return dishes;
-
-            //    foreach (var dishNode in segregatedPrices)
-            //    {
-            //         var newDishes = dishNode
-            //        dishes = dishNode == segregatedPrices.FirstOrDefault() ? newDishes : dishes.Union(newDishes);
-            //    }
-            //    return dishes;
         }
 
         private static Dish CreateDish(HtmlNode price, Func<HtmlNode, string> findName, Func<HtmlNode, Status> findAvailability)
         {
-            var sPrice = price.InnerText.Trim().Trim(' ', 'z', 'ł', '&', 'n', 'b', 's', 'p', ';', '\n');
+            var sPrice = price.InnerText.Trim(' ', 'z', 'ł', '&', 'n', 'b', 's', 'p', ';', '\n');
             var dPrice = Decimal.Parse(sPrice, new CultureInfo("pl-PL"));
             var name = findName(price);
             var availability = findAvailability(price);
@@ -52,10 +48,9 @@ namespace consoleasync
         private static IEnumerable<HtmlNode> FindPrices(HtmlNode dishContainer)
         {
             var children = dishContainer.ChildNodes;
-            if (children == null || children.Count == 0)
+            if (children == null || children.Count == 0 || IsPrice(dishContainer.InnerText.Trim('&', 'n', 'b', 's', 'p', ';', '\n', ' ')))
                 return Enumerable.Empty<HtmlNode>();
-            var priceElements = children.Where(e => IsPrice(e.InnerText.Trim('&', 'n', 'b', 's', 'p', ';', '\n', ' ')) 
-            || IsPrice(e.InnerText.Trim())); // znajdowanie HtmlNodeów z ceną, i dołączanie ich do kolekcji
+            var priceElements = children.Where(e => IsPrice(e.InnerText.Trim('&', 'n', 'b', 's', 'p', ';', '\n', ' '))); // znajdowanie HtmlNodeów z ceną, i dołączanie ich do kolekcji
             var recursivePriceElements = children.SelectMany(c => FindPrices(c)); // rekurencja i scalanie kolekcji
             return priceElements.Concat(recursivePriceElements); // zwracanie scalonej wersji kolekcji nodeów z cenami
         }
@@ -108,7 +103,19 @@ namespace consoleasync
             }
 
             return FindAncestorNode(parent, searchedNode);
+        }
+        private static IEnumerable<Dish> AddDishSizes(IEnumerable<Dish> dishes)
+        {
+            if(dishes.Count() != 3)
+            {
+                return dishes;
+            }
+            dishes = dishes.OrderBy(d => d.Price);
+            dishes.ElementAt(0).Name += " mała";
+            dishes.ElementAt(1).Name += " średnia";
+            dishes.ElementAt(2).Name += " duża";
 
+            return dishes;
         }
     }
 }
