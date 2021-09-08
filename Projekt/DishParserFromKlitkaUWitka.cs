@@ -17,20 +17,26 @@ namespace consoleasync
         public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
-            for (var i = 1; i < 6; ++i)
-            {
-                var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[{i}]/div/div[2]/ul";
+            var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div";
 
-                var client = new WebClient();
-                var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
-                var doc = new HtmlDocument();
-                doc.LoadHtml(downloadString);
+            var client = new WebClient();
+            var downloadString = await client.DownloadStringTaskAsync($"https://www.klitkauwitka.pl/restauracja/klitka-u-witka-nowy-sacz");
+            var doc = new HtmlDocument();
+            doc.LoadHtml(downloadString);
+
+            var dishGroupsContainer = doc.DocumentNode.SelectSingleNode(baseXPath);
+            var countOfDishGroups = dishGroupsContainer.ChildNodes.Where(n => n.Name == "h3").Count();
+            
+            for (var i = 1; i <= countOfDishGroups; ++i)
+            {
+                var dishContainerXPath = $"{baseXPath}/div[{i}]/div/div[2]/ul";
+                // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/ul
+                // /html/body/main/section[2]/div[2]/div/div/div/div/div/div/div[2]/div/div[2]/ul/li[1]/div/div/div[1]/div[1]/h4
                 dishes = i == 1
-                    ? DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability)
-                    : dishes.Union(DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability));
+                    ? DishParserGeneric.Parse(doc, dishContainerXPath, FindName, FindAvailability)
+                    : dishes.Union(DishParserGeneric.Parse(doc, dishContainerXPath, FindName, FindAvailability));
             }
                 return dishes;
-
         }
 
         private static Status FindAvailability(HtmlNode priceNode)

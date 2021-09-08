@@ -14,20 +14,27 @@ namespace consoleasync
         public static async Task<IEnumerable<Dish>> FindDishes()
         {
             IEnumerable<Dish> dishes = null;
-            for (var i = 1; i < 11; ++i)
-            {
-                var baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div/div[{i}]/div/div[2]/ul";
+            var baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div";
 
-                var client = new WebClient();
-                var downloadString = await client.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
-                var doc = new HtmlDocument();
-                doc.LoadHtml(downloadString);
-                dishes = i==1 
-                    ?  DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability) 
-                    : dishes.Union(DishParserGeneric.Parse(doc, baseXPath, FindName, FindAvailability));
+            var client = new WebClient();
+            var downloadString = await client.DownloadStringTaskAsync($"https://www.imperialrestauracja.pl/restauracja/restauracja-imperial");
+            var doc = new HtmlDocument();
+            doc.LoadHtml(downloadString);
+
+            var dishGroupsContainer = doc.DocumentNode.SelectSingleNode(baseXPath);
+            var countOfDishGroups = dishGroupsContainer.ChildNodes.Where(n => n.Name == "h3").Count();
+
+            for (var i = 1; i <= countOfDishGroups; ++i)
+            {
+                var dishContainerXPath = $"{baseXPath}/div[{i}]/div/div[2]/ul";
+
+                dishes = i == 1
+                    ? DishParserGeneric.Parse(doc, dishContainerXPath, FindName, FindAvailability)
+                    : dishes.Union(DishParserGeneric.Parse(doc, dishContainerXPath, FindName, FindAvailability));
             }
             return dishes;
         }
+
         public static string FindName(HtmlNode priceNode)
         {
 
