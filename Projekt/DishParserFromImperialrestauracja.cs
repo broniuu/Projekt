@@ -11,9 +11,9 @@ namespace consoleasync
 {
     class DishParserFromImperialrestauracja
     {
-        public static async Task<IEnumerable<Dish>> FindDishes()
+        public static async Task<IEnumerable<MinimalDish>> FindDishes()
         {
-            IEnumerable<Dish> dishes = null;
+            IEnumerable<MinimalDish> dishes = null;
             var baseXPath = $"/html/body/main/div/div/section/div/div/div/div[2]/div/div/div";
 
             var client = new WebClient();

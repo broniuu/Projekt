@@ -10,7 +10,7 @@ namespace consoleasync
 {
     class DishParserGeneric
     {
-        public static IEnumerable<Dish> Parse(
+        public static IEnumerable<MinimalDish> Parse(
             HtmlDocument doc, 
             string basePath, 
             Func<HtmlNode, string> findName, 
@@ -24,14 +24,14 @@ namespace consoleasync
 
 
             var dishGroups = dishes.GroupBy(d => d.Name);
-            dishes = dishGroups.SelectMany(dg => dg.Distinct(new DishComparer()));
+            dishes = dishGroups.SelectMany(dg => dg.Distinct(new MinimalDishComparer()));
             dishGroups = dishes.GroupBy(d => d.Name);
             dishes = dishGroups.SelectMany(dg => AddDishSizes(dg));
             
             return dishes;
         }
 
-        private static Dish CreateDish(HtmlNode price, Func<HtmlNode, string> findName, Func<HtmlNode, Status> findAvailability)
+        private static MinimalDish CreateDish(HtmlNode price, Func<HtmlNode, string> findName, Func<HtmlNode, Status> findAvailability)
         {
             var sPrice = price.InnerText.Trim(' ', 'z', 'ł', '&', 'n', 'b', 's', 'p', ';', '\n');
             var dPrice = Decimal.Parse(sPrice, new CultureInfo("pl-PL"));
@@ -39,7 +39,7 @@ namespace consoleasync
             var availability = findAvailability(price);
             if (!string.IsNullOrWhiteSpace(name) && dPrice != 0)
             {
-                var dish = new Dish { Name = name, Price = dPrice, Availability = availability };
+                var dish = new MinimalDish { Name = name, Price = dPrice, Availability = availability };
                 return dish;
 
             }
@@ -104,7 +104,7 @@ namespace consoleasync
 
             return FindAncestorNode(parent, searchedNode);
         }
-        private static IEnumerable<Dish> AddDishSizes(IEnumerable<Dish> dishes)
+        private static IEnumerable<MinimalDish> AddDishSizes(IEnumerable<MinimalDish> dishes)
         {
             if(dishes.Count() != 3)
             {

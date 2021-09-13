@@ -2,7 +2,7 @@
 
 namespace consoleasync
 {
-    class Dish
+    class MinimalDish
     {
         public string Name { get; set; }
         public decimal Price { get; set; }

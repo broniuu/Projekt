@@ -4,9 +4,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace consoleasync
 {
-    class DishComparer : IEqualityComparer<Dish>
+    class MinimalDishComparer : IEqualityComparer<MinimalDish>
     {
-        public bool Equals(Dish x, Dish y)
+        public bool Equals(MinimalDish x, MinimalDish y)
         {
             if (x.Price == y.Price)
                 return true;
@@ -14,7 +14,7 @@ namespace consoleasync
                 return false ;
         }
 
-        public int GetHashCode([DisallowNull] Dish dish)
+        public int GetHashCode([DisallowNull] MinimalDish dish)
         {
             return dish.Price.GetHashCode();
         }

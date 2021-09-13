@@ -14,9 +14,9 @@ namespace consoleasync
     //--------------------------------- Klitka u witka -------------------------------
     class DishParserFromKlitkaUWitka
     {
-        public static async Task<IEnumerable<Dish>> FindDishes()
+        public static async Task<IEnumerable<MinimalDish>> FindDishes()
         {
-            IEnumerable<Dish> dishes = null;
+            IEnumerable<MinimalDish> dishes = null;
             var baseXPath = $"/html/body/main/section[2]/div[2]/div/div/div/div/div/div";
 
             var client = new WebClient();

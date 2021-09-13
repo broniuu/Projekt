@@ -27,18 +27,21 @@ namespace consoleasync
             var dishesFromImperialrestauracja = await DishParserFromImperialrestauracja.FindDishes();
             Console.WriteLine(string.Join(Environment.NewLine, dishesFromImperialrestauracja.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
 
-            //var restaurantName = "Imperial Restauracja";
-            //UpsertDishes(dishesFromImperialrestauracja, restaurantName);
+            var restaurantName = "Imperial Restauracja";
+            await UpsertDishes(dishesFromImperialrestauracja, restaurantName);
 
             // Klitka u witka
             Console.WriteLine("-------------------------------------------");
             var dishesFromKlitkaUWitka = await DishParserFromKlitkaUWitka.FindDishes() ;
 
             Console.WriteLine(string.Join(Environment.NewLine, dishesFromKlitkaUWitka.Select(d => $"{d.Price} - {d.Name} - {d.Availability}")));
+            
+            restaurantName = "Klitka U Witka";
+            await UpsertDishes(dishesFromKlitkaUWitka, restaurantName);
         }
 
         //Funkcja UPSERT
-        private static void UpsertDishes(List<Dish> dishesFromRestaurant, string restaurantName)
+        private static Task UpsertDishes(IEnumerable<MinimalDish> minimalDishesFromRestaurant, string restaurantName)
         {
             using (var db = new DishContext())
             {
@@ -46,7 +49,7 @@ namespace consoleasync
                 Console.WriteLine("Querying for a Restaurant");
                 var restaurant = db.Restaurants
                     .FirstOrDefault(r => r.Name.Equals(restaurantName));
-                var dish1 = db.DishDatas;
+                var dish1 = db.Dishes;
                 if (restaurant == null)
                 {
                     // Create
@@ -57,31 +60,43 @@ namespace consoleasync
 
                 Console.WriteLine($"Upserting dishes form {restaurant}");
                 //var imperialDishesData = restaurant.DishDatas;
-                foreach (var dish in dishesFromRestaurant)
+                foreach (var minimalDish in minimalDishesFromRestaurant)
                 {
                     //Read
-                    var dishData = db.DishDatas
-                        .FirstOrDefault(d => d.Name.Equals(dish.Name) && d.RestaurantId == restaurant.RestaurantId);
-                    if (dishData == null)
+                    var dishes = db.Dishes
+                        .FirstOrDefault(d => d.Name.Equals(minimalDish.Name) && d.RestaurantId == restaurant.RestaurantId);
+                    if (dishes == null)
                     {
                         //Insert
-                        restaurant.DishDatas.Add(new DishData
+                        restaurant.Dishes.Add(new Dish
                         {
-                            Name = dish.Name,
-                            Price = dish.Price,
-                            Availability = dish.Availability
+                            Name = minimalDish.Name,
+                            Price = minimalDish.Price,
+                            Availability = minimalDish.Availability
                         });
                     }
                     else
                     {
                         //Update
-                        dishData.Price = dish.Price;
-                        dishData.Availability = dish.Availability;
+                        dishes.Price = minimalDish.Price;
+                        dishes.Availability = minimalDish.Availability;
+                    }
+                }
+                db.SaveChanges();
+                //Delete
+                var dishesFromRestaurant = db.Dishes.Where(d => d.RestaurantId == restaurant.RestaurantId);
+                foreach (var dish in dishesFromRestaurant)
+                {
+                    var minimalDish = minimalDishesFromRestaurant.FirstOrDefault(m => m.Name.Equals(dish.Name));
+                    if (minimalDish == null)
+                    {
+                        db.Remove(dish);
                     }
                 }
                 db.SaveChanges();
 
             }
+            return Task.CompletedTask;
         }
     }
 }
