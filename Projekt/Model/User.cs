@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Projekt
+﻿namespace Projekt
 {
     public class User
     {
